@@ -1,10 +1,11 @@
 <Window x:Class="GameRouteOptimizer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Game Route Optimizer" Height="620" Width="980"
+        Title="Game Route Optimizer" Height="680" Width="1080"
         WindowStartupLocation="CenterScreen">
     <Grid Margin="18">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -13,11 +14,11 @@
 
         <StackPanel Grid.Row="0">
             <TextBlock Text="Game Route Optimizer" FontSize="28" FontWeight="Bold"/>
-            <TextBlock Margin="0,4,0,14"
-                       Text="Tests relay nodes, scores latency/jitter/loss, selects the best route and sends only the selected game process through sing-box TUN."/>
+            <TextBlock Margin="0,4,0,14" TextWrapping="Wrap"
+                       Text="Multi-relay gaming route engine: sing-box continuously tests every relay, switches the game process to the best healthy path, and keeps a live backup route ready."/>
         </StackPanel>
 
-        <Grid Grid.Row="1" Margin="0,0,0,14">
+        <Grid Grid.Row="1" Margin="0,0,0,12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="220"/>
@@ -25,33 +26,73 @@
                 <ColumnDefinition Width="220"/>
                 <ColumnDefinition Width="*"/>
             </Grid.ColumnDefinitions>
+
             <TextBlock Text="Game process:" VerticalAlignment="Center"/>
             <TextBox x:Name="ProcessNameBox" Grid.Column="1" Margin="8,0,18,0" Text="game.exe"/>
+
             <TextBlock Grid.Column="2" Text="Nodes file:" VerticalAlignment="Center"/>
             <TextBox x:Name="NodesFileBox" Grid.Column="3" Margin="8,0,18,0" Text="nodes.json"/>
-            <Button Grid.Column="4" Width="120" HorizontalAlignment="Left" Content="Reload Nodes" Click="ReloadNodes_Click"/>
+
+            <Button Grid.Column="4" Width="120" HorizontalAlignment="Left"
+                    Content="Reload Nodes" Click="ReloadNodes_Click"/>
         </Grid>
 
-        <DataGrid x:Name="NodesGrid" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True"
-                  SelectionMode="Single" SelectionUnit="FullRow">
+        <Border Grid.Row="2" BorderThickness="1" CornerRadius="6" Padding="12" Margin="0,0,0,12">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Engine" FontWeight="Bold"/>
+                    <TextBlock x:Name="EngineStateText" Text="Stopped" FontSize="16"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1">
+                    <TextBlock Text="Active relay" FontWeight="Bold"/>
+                    <TextBlock x:Name="ActiveRelayText" Text="—" FontSize="16"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2">
+                    <TextBlock Text="Backup relay" FontWeight="Bold"/>
+                    <TextBlock x:Name="BackupRelayText" Text="—" FontSize="16"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <DataGrid x:Name="NodesGrid" Grid.Row="3"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  SelectionMode="Single"
+                  SelectionUnit="FullRow">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Name" Binding="{Binding Name}" Width="*"/>
                 <DataGridTextColumn Header="Host" Binding="{Binding Host}" Width="2*"/>
-                <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="80"/>
+                <DataGridTextColumn Header="Port" Binding="{Binding Port}" Width="70"/>
                 <DataGridTextColumn Header="Latency" Binding="{Binding LatencyMs, StringFormat={}{0:0.0} ms}" Width="100"/>
                 <DataGridTextColumn Header="Jitter" Binding="{Binding JitterMs, StringFormat={}{0:0.0} ms}" Width="100"/>
-                <DataGridTextColumn Header="Loss" Binding="{Binding LossPercent, StringFormat={}{0:0.0}%}" Width="90"/>
-                <DataGridTextColumn Header="Score" Binding="{Binding Score, StringFormat={}{0:0.0}}" Width="90"/>
+                <DataGridTextColumn Header="Loss" Binding="{Binding LossPercent, StringFormat={}{0:0.0}%}" Width="85"/>
+                <DataGridTextColumn Header="Score" Binding="{Binding Score, StringFormat={}{0:0.0}}" Width="85"/>
+                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
             </DataGrid.Columns>
         </DataGrid>
 
-        <DockPanel Grid.Row="3" Margin="0,14,0,0">
-            <TextBlock x:Name="StatusText" DockPanel.Dock="Left" VerticalAlignment="Center" FontWeight="SemiBold" Text="Ready"/>
+        <DockPanel Grid.Row="4" Margin="0,14,0,0">
+            <TextBlock x:Name="StatusText"
+                       DockPanel.Dock="Left"
+                       VerticalAlignment="Center"
+                       FontWeight="SemiBold"
+                       Text="Ready"/>
+
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
-                <Button Width="120" Margin="6,0" Content="Test All" Click="TestAll_Click"/>
-                <Button Width="140" Margin="6,0" Content="Auto Select Best" Click="AutoSelect_Click"/>
-                <Button Width="120" Margin="6,0" Content="Start Route" Click="StartRoute_Click"/>
-                <Button Width="120" Margin="6,0" Content="Stop" Click="StopRoute_Click"/>
+                <Button Width="120" Margin="6,0"
+                        Content="Test All" Click="TestAll_Click"/>
+                <Button Width="155" Margin="6,0"
+                        Content="Start Multi-Route" Click="StartRoute_Click"/>
+                <Button Width="120" Margin="6,0"
+                        Content="Stop" Click="StopRoute_Click"/>
             </StackPanel>
         </DockPanel>
     </Grid>

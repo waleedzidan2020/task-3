@@ -12,6 +12,16 @@ public sealed class RouteNode
     public double JitterMs { get; set; } = double.PositiveInfinity;
     public double LossPercent { get; set; } = 100;
     public double Score { get; set; } = double.PositiveInfinity;
+    public string Role { get; set; } = "";
+    public DateTime? LastTestUtc { get; set; }
 
-    public string Status => double.IsInfinity(Score) ? "Not tested" : $"{LatencyMs:0} ms | jitter {JitterMs:0.0} | loss {LossPercent:0}%";
+    public bool IsConfigured =>
+        !string.IsNullOrWhiteSpace(Host) &&
+        !Host.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase) &&
+        Port is > 0 and <= 65535;
+
+    public string Status =>
+        double.IsInfinity(Score)
+            ? "Not tested"
+            : $"{LatencyMs:0} ms | jitter {JitterMs:0.0} | loss {LossPercent:0}%";
 }
