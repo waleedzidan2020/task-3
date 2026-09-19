@@ -1,0 +1,40 @@
+name: Game Route Optimizer Build
+
+on:
+  push:
+    branches:
+      - game-route-optimizer
+    paths:
+      - "GameRouteOptimizer/**"
+      - ".github/workflows/game-route-build.yml"
+  pull_request:
+    paths:
+      - "GameRouteOptimizer/**"
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore GameRouteOptimizer/GameRouteOptimizer.csproj
+
+      - name: Build
+        run: dotnet build GameRouteOptimizer/GameRouteOptimizer.csproj -c Release --no-restore
+
+      - name: Publish portable build
+        run: dotnet publish GameRouteOptimizer/GameRouteOptimizer.csproj -c Release -r win-x64 --self-contained false -o artifact
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: GameRouteOptimizer-win-x64
+          path: artifact/
