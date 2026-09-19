@@ -113,29 +113,31 @@ public sealed class SingBoxService
             new UTF8Encoding(false),
             ct);
 
-        var psi = new ProcessStartInfo
+        await ValidateConfigAsync(exe, configPath, ct);
+
+        var psi = CreateSingBoxProcessStartInfo(
+            exe,
+            "run",
+            "-c",
+            configPath);
+
+        _process = new Process
         {
-            FileName = exe,
-            Arguments = $"run -c \"{configPath}\"",
-            WorkingDirectory = _runtimeDir,
-            UseShellExecute = false,
-            CreateNoWindow = true,
-            RedirectStandardOutput = true,
-            RedirectStandardError = true
+            StartInfo = psi,
+            EnableRaisingEvents = true
         };
 
-        _process = new Process { StartInfo = psi, EnableRaisingEvents = true };
-
         var stderr = new StringBuilder();
+
         _process.ErrorDataReceived += (_, e) =>
         {
-            if (!string.IsNullOrWhiteSpace(e.Data))
+            if (string.IsNullOrWhiteSpace(e.Data))
+                return;
+
+            lock (stderr)
             {
-                lock (stderr)
-                {
-                    if (stderr.Length < 12000)
-                        stderr.AppendLine(e.Data);
-                }
+                if (stderr.Length < 12000)
+                    stderr.AppendLine(e.Data);
             }
         };
 
@@ -179,12 +181,15 @@ public sealed class SingBoxService
                 return null;
 
             await using var stream = await response.Content.ReadAsStreamAsync(ct);
-            using var doc = await JsonDocument.ParseAsync(stream, cancellationToken: ct);
+            using var doc = await JsonDocument.ParseAsync(
+                stream,
+                cancellationToken: ct);
 
             if (!doc.RootElement.TryGetProperty("now", out var nowElement))
                 return null;
 
             var activeTag = nowElement.GetString();
+
             if (string.IsNullOrWhiteSpace(activeTag))
                 return null;
 
@@ -217,6 +222,68 @@ public sealed class SingBoxService
             _process.Dispose();
             _process = null;
         }
+    }
+
+    private static ProcessStartInfo CreateSingBoxProcessStartInfo(
+        string exe,
+        params string[] arguments)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = exe,
+            WorkingDirectory = Path.GetDirectoryName(exe) ?? AppContext.BaseDirectory,
+            UseShellExecute = false,
+            CreateNoWindow = true,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true
+        };
+
+        foreach (var argument in arguments)
+            psi.ArgumentList.Add(argument);
+
+        return psi;
+    }
+
+    private static async Task ValidateConfigAsync(
+        string exe,
+        string configPath,
+        CancellationToken ct)
+    {
+        var psi = CreateSingBoxProcessStartInfo(
+            exe,
+            "check",
+            "-c",
+            configPath);
+
+        using var validation = new Process
+        {
+            StartInfo = psi
+        };
+
+        if (!validation.Start())
+            throw new InvalidOperationException(
+                "Could not start sing-box configuration validation.");
+
+        var stdoutTask = validation.StandardOutput.ReadToEndAsync(ct);
+        var stderrTask = validation.StandardError.ReadToEndAsync(ct);
+
+        await validation.WaitForExitAsync(ct);
+
+        var stdout = await stdoutTask;
+        var stderr = await stderrTask;
+
+        if (validation.ExitCode == 0)
+            return;
+
+        var details = string.Join(
+            Environment.NewLine,
+            new[] { stderr.Trim(), stdout.Trim() }
+                .Where(s => !string.IsNullOrWhiteSpace(s)));
+
+        throw new InvalidOperationException(
+            string.IsNullOrWhiteSpace(details)
+                ? "sing-box rejected the generated configuration."
+                : $"sing-box config validation failed:{Environment.NewLine}{details}");
     }
 
     private string BuildMultiRouteConfig(
@@ -314,6 +381,9 @@ public sealed class SingBoxService
 
         return JsonSerializer.Serialize(
             cfg,
-            new JsonSerializerOptions { WriteIndented = true });
+            new JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
     }
 }
