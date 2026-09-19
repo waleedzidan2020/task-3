@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Frankfurt VPS",
+    "host": "YOUR_FRANKFURT_VPS_IP",
+    "port": 1080,
+    "username": "gamer",
+    "password": "CHANGE_ME"
+  },
+  {
+    "name": "Marseille VPS",
+    "host": "YOUR_MARSEILLE_VPS_IP",
+    "port": 1080,
+    "username": "gamer",
+    "password": "CHANGE_ME"
+  },
+  {
+    "name": "Milan VPS",
+    "host": "YOUR_MILAN_VPS_IP",
+    "port": 1080,
+    "username": "gamer",
+    "password": "CHANGE_ME"
+  }
+]
