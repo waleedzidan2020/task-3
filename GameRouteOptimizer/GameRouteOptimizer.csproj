@@ -9,4 +9,10 @@
     <AssemblyName>GameRouteOptimizer</AssemblyName>
     <RootNamespace>GameRouteOptimizer</RootNamespace>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Update="nodes.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
 </Project>
